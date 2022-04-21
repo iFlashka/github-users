@@ -1,22 +1,43 @@
 import Vue from 'vue'
 import VueRouter from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import UsersIndex from '@/pages/users/index/UsersIndex'
+import UsersSingle from '@/pages/users/single/UsersSingle'
+import AuthSignIn from '@/pages/auth/sign-in/AuthSignIn'
+import AuthSuccess from '@/pages/auth/success/AuthSuccess'
+import { getCookie } from '@/helpers/cookie'
 
 Vue.use(VueRouter)
 
 const routes = [
   {
     path: '/',
-    name: 'home',
-    component: HomeView
+    redirect: '/users'
   },
   {
-    path: '/about',
-    name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
+    path: '/users',
+    name: 'users',
+    component: UsersIndex
+  },
+  {
+    path: '/users/:username',
+    name: 'users-single',
+    component: UsersSingle
+  },
+  {
+    path: '/auth/sign-in',
+    name: 'signIn',
+    component: AuthSignIn,
+    meta: {
+      isPublic: true
+    }
+  },
+  {
+    path: '/auth/success',
+    name: 'success',
+    component: AuthSuccess,
+    meta: {
+      isPublic: true
+    }
   }
 ]
 
@@ -24,6 +45,24 @@ const router = new VueRouter({
   mode: 'history',
   base: process.env.BASE_URL,
   routes
+})
+
+router.beforeEach((to, from, next) => {
+  const token = getCookie('access_token')
+
+  if (!token && !to.meta.isPublic) {
+    next({
+      name: 'signIn'
+    })
+  }
+
+  if (token && to.meta.isPublic) {
+    next({
+      name: 'users'
+    })
+  }
+
+  next()
 })
 
 export default router
